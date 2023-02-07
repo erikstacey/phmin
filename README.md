@@ -35,11 +35,11 @@ example_minner = ph_minner(x=x, y=y, err=y_err, periods=manual_period_grid, t0=2
 ```
 
 The results can be directly accessed through attributes of the ph_minner class.
-```example_minner.periods``` - Array of periods
-```example_minner.red_chisqs``` - Array of reduced chi squared values corresponding to the best fit achieved at each period
-```example_minner.chisqs``` - Array of (unreduced) chi squared values corresponding to the best fit achieved at each period
-```example_minner.best_amps``` - Array of the optimized amplitude at each period
-```example_minner.best_phcorrs``` - Array of the optimized phase at each period. This defines the signal phase relative to t0.
+```example_minner.periods``` - Array of periods  
+```example_minner.red_chisqs``` - Array of reduced chi squared values corresponding to the best fit achieved at each period  
+```example_minner.chisqs``` - Array of (unreduced) chi squared values corresponding to the best fit achieved at each period  
+```example_minner.best_amps``` - Array of the optimized amplitude at each period  
+```example_minner.best_phcorrs``` - Array of the optimized phase at each period. This defines the signal phase relative to t0.  
 
 ## Method
 This package is intended to solve the problem of determining the principal frequency present in time series data through 
