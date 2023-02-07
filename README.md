@@ -56,5 +56,9 @@ period and goodness of fit can be examined by plotting candidate period v. red c
 
 
 ### Changelog
-6 Feb, 2023  
+V0.1.0 (6 Feb, 2023)  
+-Added methods to ph_minner for printing and plotting results
+-Throws an exception if the user tries to plot or print without running first
+
+V0.0.1 6 Feb, 2023
 -Working package published on github
