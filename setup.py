@@ -1,8 +1,9 @@
 from setuptools import setup
 
 setup(name="phmin",
-      version="0.1.1",
-      description="Basic package for phase dispersion minimization in time series data.",
+      version="0.1.0",
+      description="A basic python package for identifying frequencies present in"
+                  " time series data based on the principles of phase dispersion minimization. ",
       url="https://www.github.com/erikstacey/PHMIN",
       author="Erik William Stacey",
       author_email = "erik@erikstacey.com",
