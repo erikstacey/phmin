@@ -213,7 +213,7 @@ class ph_minner():
 
         if np.any(self.err!=1):
             axs[0].errorbar(self.time, self.data, yerr= self.err, lw=1, capsize=3, color="black",
-                            linestyle="none")
+                            linestyle="none", marker=".")
         else:
             axs[0].plot(self.time, self.data, color="black", linestyle="none", marker=".")
         axs[0].set_xlabel("Time")
@@ -221,7 +221,7 @@ class ph_minner():
 
         if np.any(self.err!=1):
             axs[1].errorbar(best_phases, self.data, yerr= self.err, lw=1, capsize=1.5, color="black",
-                            label="data", linestyle="none")
+                            label="data", linestyle="none", marker=".")
         else:
             axs[1].plot(best_phases, self.data, color="black", linestyle="none", marker=".", label="data")
         model_phases = np.linspace(0,1,1000)

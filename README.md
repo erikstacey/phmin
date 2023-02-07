@@ -69,6 +69,10 @@ period and goodness of fit can be examined by plotting candidate period v. red c
 
 
 ### Changelog
+
+V0.1.4 (6 Feb, 2023)  
+-Fixed plot_results()
+
 V0.1.3 (6 Feb, 2023)  
 -Removed redundant fmt in plot_results()
 
