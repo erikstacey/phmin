@@ -6,7 +6,13 @@ Date: 6 Feb, 2023
 
 ## Installation
 
-phmin is presently only available on github and must be downloaded and installed using pip: 
+phmin is available through pip:  
+```
+pip install phmin
+```
+
+Or, alternatively, download and install directly from this repo:
+
 ```
 git clone https://github.com/erikstacey/phmin.git ./phmin
 cd phmin
@@ -25,6 +31,13 @@ example_minner = ph_minner(x=x, y=y, err=y_err)
 The above code will automatically generate a period grid. To run the minimizer, call the run method:  
 ```
 example_minner.run()
+```
+
+To print or plot the results, call
+
+```
+example_minner.print_results()
+example_minner.plot_results()
 ```
 
 ## Advanced Usage
