@@ -216,7 +216,7 @@ class ph_minner():
                             linestyle="none")
         else:
             axs[0].plot(self.time, self.data, color="black", linestyle="none", marker=".")
-        axs[0].set_xlabel("Phase [0-1]")
+        axs[0].set_xlabel("Time")
         axs[0].set_ylabel("Data")
 
         if np.any(self.err!=1):
