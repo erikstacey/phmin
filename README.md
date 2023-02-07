@@ -55,9 +55,6 @@ finding the candidate period corresponding to the minimum reduced chi squared. A
 period and goodness of fit can be examined by plotting candidate period v. red chi squared.
 
 
-
-
-
-Log:  
+### Changelog
 6 Feb, 2023  
 -Working package published on github
