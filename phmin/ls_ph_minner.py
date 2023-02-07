@@ -19,17 +19,16 @@ class ph_minner():
     periods : np.array
         Stores the period grid used for the phase dispersion minimization. Acts as an 'x-axis' for the measured red
         chisqs and the stored parameters
-    nb : int
-        Number of bins
-    nc : int
-        Number of "covers". Each data point occupies nc bins.
-
-
-    _bins_ll : np.array
-        array of cover bin lower limits
-    _bins_ul : np.array
-        array of cover bin upper limits
-
+    best_amps : np.array
+        stores the best amplitudes determined during the scipy minimize step for each period
+    best_phcorrs : np.array
+        same as best_amps for the phase corrections
+    red_chisqs : np.array
+        Stores the best red chisq achieved for each period.
+    chisqs : np.array
+        Stores the best chisq achieved for each period.
+    ndof : int
+        Number of degrees of freedom in the minimization process.
     N : int
         Iteration counter
     compute_time : float
@@ -43,7 +42,8 @@ class ph_minner():
         Iterates over all candidate periods in self.periods, performing sinusoidal model optimizations on the phased
         data at each candidate period. Populates the results arrays.
     best_fit_pars()
-        Placeholder
+        If run() has been called at least once, returns the best period, best amplitude, best phase, and minimum chi
+        squared of the last run.
     print_results()
         Prints a basic report on the last run
     plot_results()
@@ -100,6 +100,18 @@ class ph_minner():
         self.chisqs = np.zeros(len(self.periods))
 
 
+    def _adjust_params(self, in_a, in_p):
+        a = in_a
+        p = in_p
+        # adjust amplitude
+        if a < 0:
+            a = abs(self.a)
+            p += 0.5
+
+        if p > 1 or p < 0:
+            p = p % 1
+
+        return a, p
 
 
     def _gen_P_grid(self):
@@ -119,42 +131,29 @@ class ph_minner():
 
         self.periods = np.linspace(min_p, max_p, nperiods)
 
-    def _build_bins(self, nb, nc):
-        """Populates the _ncbins_x arrays with the bin edges"""
-        self.nb = nb
-        self.nc = nc
-        self._bins_ll = np.zeros(nb*nc)
-        self._bins_ul = np.zeros(nb*nc)
-        bw = 1/nb
-        for i in range(self.nb*self.nc):
-            curr_leftedge = i/(nb*nc)
-            curr_rightedge = curr_leftedge + bw
-            # wrap around unit interval
-            if curr_rightedge > 1:
-                curr_rightedge -= 1
-
-            self._bins_ll[i] = curr_leftedge
-            self._bins_ul[i] = curr_rightedge
-
-    def diagnostic_plot_bins(self):
-        fig, ax = pl.subplots()
-        for i in range(self.nb*self.nc):
-            rgb = np.random.rand(3)
-            ax.axvline(self._bins_ll[i], color=rgb, linestyle="--")
-            ax.axvline(self._bins_ul[i], color=rgb, linestyle="--")
-
-        ax.set_xlim(0, 1)
-        pl.show()
-
-
-
 
     def run(self, verbose = False):
         self.N=0
         print("[phmin][INFO] Running phmin...")
         starttime=time.time()
         for i in range(len(self.periods)):
-            pass
+            phased_time = phase(self.time, self.t0, self.periods[i])
+            # lambda function wraps the chi squared function into a form appropriate for scipy minimize
+            min_func = lambda pars: chisq(sinf1(phased_time, pars[0], pars[1]), self.data, self.err)
+            x0 = np.array([max(self.data-np.mean(self.data)), 0.5])
+            min_res = minimize(fun=min_func, x0=x0)
+
+
+            self.best_amps[i] = min_res.x[0]
+            self.best_phcorrs[i] = min_res.x[1]
+            self.red_chisqs[i] = red_chisq(sinf1(phased_time, min_res.x[0], min_res.x[1]),
+                                        self.data, self.err, self.ndof)
+            self.chisqs[i] = chisq(sinf1(phased_time, min_res.x[0], min_res.x[1]),
+                                        self.data, self.err)
+            if verbose:
+                print(f"[phmin][DEBUG] P={self.periods[i]} complete. Red chisq:{self.red_chisqs[i]}")
+                print(f"\t\t a={self.best_amps[i]}, phcorr={self.best_phcorrs[i]}")
+            self.N+=1
 
         self.compute_time = time.time() - starttime
         print(f"[phmin][INFO] phminner run complete in {self.compute_time:.5f} s ({self.N} it)")
@@ -174,14 +173,29 @@ class ph_minner():
         bestredchi : float
             The minimum measured red chisq
         """
-        pass
+        best_i = np.argmin(self.red_chisqs)
+        if type(best_i) == np.array:
+            print("[phmin][WARNING] Multiple equivalent values were found for minimum reduced chi squareds. "
+                  "This is most likely to happen if the fits all fail and revert to initial parameters. If this is the"
+                  "case, consider manually defining a period grid around the region of interest when initializing"
+                  "the ph_minner object.")
+            print("[phmin][INFO] Assuming first value to be the true minimum and proceeding...")
+            best_i = best_i[0]
+        return self.periods[best_i], self.best_amps[best_i], self.best_phcorrs[best_i], self.red_chisqs[best_i]
 
     def print_results(self):
         if not self.has_run:
             raise NoResultsError("Cannot print report as no results have been computed yet. "
                                  "Either something went wrong while computing or you haven't called"
                                  "ph_minner.run() yet.")
-        pass
+        best_period, best_amp, best_phi, best_redchisq = self.best_fit_pars()
+        """Prints the best results to the console."""
+        print("[phmin][OUT] FIT REPORT")
+        print(f"\t\t Time: {self.compute_time}, It: {self.N}")
+        print(f"\t\t Best fit period: {best_period}")
+        print(f"\t\t Best fit amplitude: {best_amp}")
+        print(f"\t\t Best fit phase: {best_phi}")
+        print(f"\t\t Best fit reduced chi squared: {best_redchisq}")
 
     def plot_results(self):
         """shows a set of three stacked subplots summarizing the results
@@ -192,8 +206,42 @@ class ph_minner():
             raise NoResultsError("Cannot print report as no results have been computed yet. "
                                  "Either something went wrong while computing or you haven't called"
                                  "ph_minner.run() yet.")
+        best_period, best_amp, best_phi, best_redchisq = self.best_fit_pars()
+        best_phases = phase(self.time, self.t0, best_period)
+        fig, axs = pl.subplots(3, 1)
+        fig.set_size_inches(8,12)
 
-if __name__=="__main__":
-    testobj = ph_minner([0, 1, 2], [0, 1, 2])
-    testobj._build_bins(5,2)
-    testobj.diagnostic_plot_bins()
+        if np.any(self.err!=1):
+            axs[0].errorbar(self.time, self.data, yerr= self.err, lw=1, capsize=3, color="black",
+                            linestyle="none", marker=".")
+        else:
+            axs[0].plot(self.time, self.data, color="black", linestyle="none", marker=".")
+        axs[0].set_xlabel("Time")
+        axs[0].set_ylabel("Data")
+
+        if np.any(self.err!=1):
+            axs[1].errorbar(best_phases, self.data, yerr= self.err, lw=1, capsize=1.5, color="black",
+                            label="data", linestyle="none", marker=".")
+        else:
+            axs[1].plot(best_phases, self.data, color="black", linestyle="none", marker=".", label="data")
+        model_phases = np.linspace(0,1,1000)
+        axs[1].plot(model_phases, sinf1(model_phases, best_amp, best_phi), color="red", label="Best Fit Model")
+        axs[1].set_xlabel("Phase [0-1]")
+        axs[1].set_ylabel("Data")
+        axs[1].legend()
+        axs[2].plot(self.periods, self.red_chisqs, color="black")
+        axs[2].axvline(best_period, color="red")
+        axs[2].set_xlabel("Period")
+        axs[2].set_ylabel("Red. Chi Squared")
+        pl.show()
+        pl.clf()
+
+
+
+
+
+
+
+
+
+

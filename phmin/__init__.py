@@ -1,1 +1,1 @@
-from phmin.ph_minner import ph_minner
+from phmin.ls_ph_minner import ph_minner
