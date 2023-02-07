@@ -34,7 +34,7 @@ manual_period_grid = np.linspace(4.4, 4.8, 500)
 example_minner = ph_minner(x=x, y=y, err=y_err, periods=manual_period_grid, t0=2457000.0)
 ```
 
-The results can be directly accessed through attributes of the ph_minner class.
+The results can be directly accessed through attributes of the ph_minner class.  
 ```example_minner.periods``` - Array of periods  
 ```example_minner.red_chisqs``` - Array of reduced chi squared values corresponding to the best fit achieved at each period  
 ```example_minner.chisqs``` - Array of (unreduced) chi squared values corresponding to the best fit achieved at each period  
