@@ -212,7 +212,7 @@ class ph_minner():
         fig.set_size_inches(8,12)
 
         if np.any(self.err!=1):
-            axs[0].errorbar(self.time, self.data, yerr= self.err, lw=1, fmt='.k', capsize=3, color="black",
+            axs[0].errorbar(self.time, self.data, yerr= self.err, lw=1, capsize=3, color="black",
                             linestyle="none")
         else:
             axs[0].plot(self.time, self.data, color="black", linestyle="none", marker=".")
@@ -220,8 +220,8 @@ class ph_minner():
         axs[0].set_ylabel("Data")
 
         if np.any(self.err!=1):
-            axs[1].errorbar(best_phases, self.data, yerr= self.err, lw=1, fmt='.k', capsize=1.5, color="black",
-                            label="data")
+            axs[1].errorbar(best_phases, self.data, yerr= self.err, lw=1, capsize=1.5, color="black",
+                            label="data", linestyle="none")
         else:
             axs[1].plot(best_phases, self.data, color="black", linestyle="none", marker=".", label="data")
         model_phases = np.linspace(0,1,1000)
