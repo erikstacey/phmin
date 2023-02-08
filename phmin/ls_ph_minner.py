@@ -226,7 +226,7 @@ class ls_ph_minner():
             axs[1].plot(best_phases, self.data, color="black", linestyle="none", marker=".", label="data")
         model_phases = np.linspace(0,1,1000)
         axs[1].plot(model_phases, sinf1(model_phases, best_amp, best_phi), color="red", label="Best Fit Model")
-        axs[1].set_xlabel("Phase [0-1]")
+        axs[1].set_xlabel(f"Phase [0-1], P={best_period}")
         axs[1].set_ylabel("Data")
         axs[1].legend()
         axs[2].plot(self.periods, self.red_chisqs, color="black")
