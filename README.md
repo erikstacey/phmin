@@ -62,9 +62,8 @@ example_minner = ph_minner(x=x, y=y, err=y_err, periods=manual_period_grid, t0=2
 
 The results can be directly accessed through attributes of the ```ph_minner``` class.  
 ```ph_minner.periods``` - Array of periods  
-```ph_minner.thetas``` - Array of theta values. See Stellingwerf (1978, ApJ, 224, 953) for details. In short, 
-as theta approaches zero the statistical significance of the measured frequency increases. On the contrary, theta at 1
-indicates minimum statistical significance. Additionally, the minimum theta value and its corresponding period can be retrieved using  
+```ph_minner.thetas``` - Array of theta values. See [Stellingwerf (1978, ApJ, 224, 953)](https://ui.adsabs.harvard.edu/abs/1978ApJ...224..953S/abstract) and 
+[Schwarzenberg-Czerny (1997, ApJ, 489(2), 941)](https://ui.adsabs.harvard.edu/abs/1997ApJ...489..941S/abstract) for details.
 
 ```
 best_P, min_theta = ph_minner.best_fit_pars()
