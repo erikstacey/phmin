@@ -23,7 +23,11 @@ class ph_minner():
         Number of bins
     nc : int
         Number of "covers". Each data point occupies nc bins.
-
+    tvar : float
+        Total variance of the data array. Used to compute the theta statistic.
+    thetas : np.array
+        Array of theta statistics. Theta close to zero indicates statistical significance, and the minimum
+        theta indicates the most statistically likely period.
 
     _bins_ll : np.array
         array of cover bin lower limits
@@ -53,7 +57,7 @@ class ph_minner():
     N=0
     compute_time = 0
 
-    def __init__(self, time, data, err=None, periods=None, t0=0):
+    def __init__(self, time, data, err=None, periods=None, t0=0, nb=5, nc=2):
         """Initializer for ph_minner. Imports data.
 
         Parameters
@@ -88,16 +92,11 @@ class ph_minner():
             self._gen_P_grid()
 
         self.t0=t0
-
-        # compute the ndof
-        # functionally have three parameters (period, amplitude, phase)
-        self.ndof = len(self.time) - 3
-
-        # initialize best_pars and red_chisqs arrays with
-        self.best_amps = np.zeros(len(self.periods))
-        self.best_phcorrs = np.zeros(len(self.periods))
-        self.red_chisqs = np.zeros(len(self.periods))
-        self.chisqs = np.zeros(len(self.periods))
+        self.nb = nb
+        self.nc = nc
+        self._build_bins(nb=nb, nc=nc)
+        self.tvar = np.var(self.data)
+        self.thetas = np.zeros(len(self.periods))
 
 
 
@@ -136,25 +135,39 @@ class ph_minner():
             self._bins_ll[i] = curr_leftedge
             self._bins_ul[i] = curr_rightedge
 
-    def diagnostic_plot_bins(self):
-        fig, ax = pl.subplots()
-        for i in range(self.nb*self.nc):
-            rgb = np.random.rand(3)
-            ax.axvline(self._bins_ll[i], color=rgb, linestyle="--")
-            ax.axvline(self._bins_ul[i], color=rgb, linestyle="--")
-
-        ax.set_xlim(0, 1)
-        pl.show()
-
-
-
+    def _compute_bin_var(self, phases, ll, ul):
+        # if ll > ul, then the bin is wrapping around the unit interval and must be treated differently
+        if ll > ul:
+            bin_mask = (phases>ll) + (phases < ul)
+        else:
+            bin_mask = (phases>ll) * (phases < ul)
+        bin_data = self.data[bin_mask]
+        if len(bin_data) >=2:
+            return np.var(self.data[bin_mask]), len(bin_data)
+        else:
+            return 0, 0
 
     def run(self, verbose = False):
-        self.N=0
+        self.N = 0
         print("[phmin][INFO] Running phmin...")
         starttime=time.time()
         for i in range(len(self.periods)):
-            pass
+            self.N+=1
+            phased_time = phase(self.time, self.t0, self.periods[i])
+            # compute vars for each bin
+            bin_vars = np.zeros(self.nb*self.nc)
+            bin_npts = np.zeros(self.nb * self.nc)
+            for k in range(self.nb*self.nc):
+                bin_vars[k], bin_npts[k] = self._compute_bin_var(phased_time, self._bins_ll[k], self._bins_ul[k])
+
+
+            # evaluate according to eq 2 in Stellingwerf 1978
+            s_num = 0
+            s_den = -self.nb*self.nc  # -M component
+            for k in range(self.nb*self.nc):
+                s_num += (bin_npts[k]-1)*bin_vars[k]
+                s_den += bin_npts[k]
+            self.thetas[i] = (s_num / s_den) / self.tvar
 
         self.compute_time = time.time() - starttime
         print(f"[phmin][INFO] phminner run complete in {self.compute_time:.5f} s ({self.N} it)")
@@ -167,21 +180,24 @@ class ph_minner():
         -----------
         minper : float
             The best-fit period
-        bestamp : float
-            The best-fit amplitude at the best-fit period
-        bestphi : float
-            The best-fit phase at the best-fit period
-        bestredchi : float
-            The minimum measured red chisq
         """
-        pass
+        best_i = np.argmin(self.thetas)
+        best_P = self.periods[best_i]
+        min_theta = self.thetas[best_i]
+        return best_P, min_theta
 
     def print_results(self):
         if not self.has_run:
             raise NoResultsError("Cannot print report as no results have been computed yet. "
                                  "Either something went wrong while computing or you haven't called"
                                  "ph_minner.run() yet.")
-        pass
+        else:
+            best_P, min_theta = self.best_fit_pars()
+            print("[phmin][OUT] Fit Report:")
+            print(f"\t\t Run complete in {self.compute_time} s evaluating {self.N} iterations and {self.nb*self.nc} "
+                  f"bins per iteration")
+            print(f"\t\t Best P: {best_P}")
+            print(f"\t\t Min Theta: {min_theta}")
 
     def plot_results(self):
         """shows a set of three stacked subplots summarizing the results
@@ -192,6 +208,33 @@ class ph_minner():
             raise NoResultsError("Cannot print report as no results have been computed yet. "
                                  "Either something went wrong while computing or you haven't called"
                                  "ph_minner.run() yet.")
+        else:
+            best_P, min_theta = self.best_fit_pars()
+            best_phases = phase(self.time, self.t0, best_P)
+            fig, axs = pl.subplots(3, 1)
+            fig.set_size_inches(8, 12)
+
+            if np.any(self.err != 1):
+                axs[0].errorbar(self.time, self.data, yerr=self.err, lw=1, capsize=3, color="black",
+                                linestyle="none", marker=".")
+            else:
+                axs[0].plot(self.time, self.data, color="black", linestyle="none", marker=".")
+            axs[0].set_xlabel("Time")
+            axs[0].set_ylabel("Data")
+
+            if np.any(self.err != 1):
+                axs[1].errorbar(best_phases, self.data, yerr=self.err, lw=1, capsize=1.5, color="black",
+                                label="data", linestyle="none", marker=".")
+            else:
+                axs[1].plot(best_phases, self.data, color="black", linestyle="none", marker=".")
+            axs[1].set_xlabel(f"Phase [0-1], P={best_P}")
+            axs[1].set_ylabel("Data")
+            axs[2].plot(self.periods, self.thetas, color="black")
+            axs[2].axvline(best_P, color="red")
+            axs[2].set_xlabel("Period")
+            axs[2].set_ylabel("Theta")
+            pl.show()
+            pl.clf()
 
 if __name__=="__main__":
     testobj = ph_minner([0, 1, 2], [0, 1, 2])

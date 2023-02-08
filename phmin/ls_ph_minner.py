@@ -5,7 +5,7 @@ import matplotlib.pyplot as pl
 import time
 from phmin.custom_exceptions import NoResultsError
 
-class ph_minner():
+class ls_ph_minner():
     """Class that stores and operates on a time series to measure periods via phase dispersion minimization.
 
     Attributes

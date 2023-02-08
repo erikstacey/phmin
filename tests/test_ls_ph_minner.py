@@ -9,10 +9,7 @@ def gen_test_data():
 def test_ph_minner():
     x, y = gen_test_data()
     print("Running test minner. Should determine best period to be 2.5 d.")
-    test_minner = phmin.ph_minner(time=x, data=y, err= np.ones(len(x))*2, nb=20, nc=4)
+    test_minner = phmin.ls_ph_minner(time=x, data=y, err= np.ones(len(x))*2)
     test_minner.run(verbose=True)
     test_minner.print_results()
     test_minner.plot_results()
-
-
-
