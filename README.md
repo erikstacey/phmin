@@ -48,10 +48,10 @@ the time series under examination. These are set through the optional parameters
 example_minner = ph_minner(x=x, y=y, err=y_err, nb = 10, nc=4)
 ```
 
-The ```nb``` and ```nc``` parameters are unintuitive as how they control the phase binning. Firstly, the bin width is
+The ```nb``` and ```nc``` parameters are unintuitive as to how they control the phase binning. Firstly, the bin width is
 equivalent to ```1/nb```, and the total number of bins is equivalent to ```nb*nc```. As the bins must remain within```[0,1]```,
 setting ```nc>1``` will result in overlapping bins with bin centers evenly spaced by ```1/(nb*nc)``` and wrapping around
-the edges of the phase interval ```[0,1]```. The default parameters set ```nb=5, nc=2```, resulting in 10 0.2-width bins.  
+the edges of the phase interval ```[0,1]```. The default parameters set ```nb=5, nc=2```, resulting in 10 bins of width 0.2 in phase.  
 
 The ph_minner class can also be initialized with optional parameters periods and t0. Setting periods manually defines the period grid, and setting t0 manually sets the reference time for the phasing.  
 
@@ -73,7 +73,7 @@ This package also includes a class ```ls_ph_minner```, which operates similarly 
 this class actually relies on chi squared minimization of a sinusoidal variability model against the phased data at each candidate
 period, making it statistically equivalent to a Lomb-Scargle analysis (and functionally different from a phase dispersion
 minimization analysis). This is useful for quickly identifying a single sinusoidal frequency in spaced data, 
-however for LS frequency analysis my [PyPreW](https://github.com/erikstacey/PyPreW) package is significantly more capable.  
+however for LS frequency analysis my [pywhiten](https://github.com/erikstacey/pywhiten) package is significantly more capable.  
 
 
 ## Method
